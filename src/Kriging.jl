@@ -7,6 +7,26 @@ gaussiancov(h, maxcov, scale, nugget=0.) = maxcov * exp(-(h * h) / (scale * scal
 expcov(h, maxcov, scale, nugget=0.) = maxcov * exp(-h / scale) + (h > 0 ? 0. : nugget)
 sphericalcov(h, maxcov, scale, nugget=0.) = (h <= scale ? maxcov * (1 - 1.5 * h / (scale) + .5 * (h / scale) ^ 3) : 0.) + (h > 0 ? 0. : nugget)
 
+function distsquared(a, b)
+	result = 0.0
+	for i = 1:length(a)
+		result += (a[i] - b[i]) ^ 2
+	end
+	return result
+end
+
+function inversedistance(x0mat::Matrix, X::Matrix, Z::Vector, pow)
+	result = Array(Float64, size(x0mat, 2))
+	weights = Array(Float64, size(X, 2))
+	for i = 1:size(x0mat, 2)
+		for j = 1:size(X, 2)
+			weights[j] = 1 / distsquared(x0mat[:, i], X[:, j]) ^ (.5 * pow)
+		end
+		result[i] = dot(weights, Z) / sum(weights)
+	end
+	return result
+end
+
 function simplekrige(mu, x0mat::Matrix, X::Matrix, Z::Vector, cov)
 	result = fill(mu, size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
