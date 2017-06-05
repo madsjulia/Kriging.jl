@@ -1,7 +1,6 @@
 module Kriging
 
 import NearestNeighbors
-import Permutations
 
 gaussiancov(h, maxcov, scale, nugget=0.) = maxcov * exp(-(h * h) / (scale * scale)) + (h > 0 ? 0. : nugget)
 expcov(h, maxcov, scale, nugget=0.) = maxcov * exp(-h / scale) + (h > 0 ? 0. : nugget)
@@ -84,7 +83,7 @@ function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov, numneighbors, numobsn
 	nnindices_obs, _ = NearestNeighbors.knn(obs_kdtree, x0mat, numobsneighbors, true)
 	z0 = Array(Float64, size(x0mat, 2))
 	filledin = fill(false, size(x0mat, 2))
-	perm = Permutations.RandomPermutation(size(x0mat, 2))
+	perm = randperm(size(x0mat, 2))
 	maxvar = 0.
 	for i = 1:size(x0mat, 2)
 		thisx0 = reshape(x0mat[:, perm[i]], 3, 1)
