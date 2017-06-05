@@ -76,7 +76,7 @@ function krigenew(x0mat::Matrix, X::Matrix, Z::Vector, cov)
 	return result, resultvariance
 end
 
-function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov, numneighbors, numobsneighbors=length(Z); neighborsearch=1000)
+function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov, numneighbors, numobsneighbors=length(Z); neighborsearch=min(1000, size(x0mat, 2)))
 	kdtree = NearestNeighbors.KDTree(x0mat)
 	nnindices, _ = NearestNeighbors.knn(kdtree, x0mat, neighborsearch, true)
 	obs_kdtree = NearestNeighbors.KDTree(X)
