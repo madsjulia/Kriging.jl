@@ -86,11 +86,11 @@ function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov, numneighbors, numobsn
 	perm = randperm(size(x0mat, 2))
 	maxvar = 0.
 	for i = 1:size(x0mat, 2)
-		thisx0 = reshape(x0mat[:, perm[i]], 3, 1)
+		thisx0 = reshape(x0mat[:, perm[i]], size(x0mat, 1), 1)
 		neighbors = nnindices[perm[i]]
 		obs_neighbors = nnindices_obs[perm[i]]
 		numfilled = sum(filledin[neighbors])
-		bigX = Array(Float64, 3, min(numneighbors, numfilled) + numobsneighbors)
+		bigX = Array(Float64, size(x0mat, 1), min(numneighbors, numfilled) + numobsneighbors)
 		bigZ = Array(Float64, min(numneighbors, numfilled) + numobsneighbors)
 		bigX[:, 1:numobsneighbors] = X[:, obs_neighbors]
 		bigZ[1:numobsneighbors] = Z[obs_neighbors]
