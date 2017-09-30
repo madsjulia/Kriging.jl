@@ -1,10 +1,76 @@
 module Kriging
 
 import NearestNeighbors
+import DocumentFunction
 
 gaussiancov(h, maxcov, scale, nugget=0.) = maxcov * exp(-(h * h) / (scale * scale)) + (h > 0 ? 0. : nugget)
 expcov(h, maxcov, scale, nugget=0.) = maxcov * exp(-h / scale) + (h > 0 ? 0. : nugget)
 sphericalcov(h, maxcov, scale, nugget=0.) = (h <= scale ? maxcov * (1 - 1.5 * h / (scale) + .5 * (h / scale) ^ 3) : 0.) + (h > 0 ? 0. : nugget)
+
+"""
+Spherical variogram
+
+$(DocumentFunction.documentfunction(sphericalvariogram;
+argtext=Dict("h"=>"separation distance",
+            "sill"=>"sill",
+            "range"=>"range",
+            "nugget"=>"nugget")))
+
+Returns:
+
+- Spherical variogram
+"""
+function sphericalvariogram(h::Number, sill::Number, range::Number, nugget::Number)
+	if h == 0.
+		return 0.
+	elseif h < range
+		return (sill - nugget) * ((3 * h / (2 * range) - h ^ 3 / (2 * range ^ 3))) + nugget
+	else
+		return sill
+	end
+end
+
+"""
+Exponential variogram
+
+$(DocumentFunction.documentfunction(exponentialvariogram;
+argtext=Dict("h"=>"separation distance",
+            "sill"=>"sill",
+            "range"=>"range",
+            "nugget"=>"nugget")))
+
+Returns:
+
+- Exponential variogram
+"""
+function exponentialvariogram(h::Number, sill::Number, range::Number, nugget::Number)
+	if h == 0.
+		return 0.
+	else
+		return (sill - nugget) * (1 - exp(-h / (3 * range))) + nugget
+	end
+end
+
+"""
+Gaussian variogram
+
+$(DocumentFunction.documentfunction(gaussianvariogram;
+argtext=Dict("h"=>"separation distance",
+            "sill"=>"sill",
+            "range"=>"range",
+            "nugget"=>"nugget")))
+
+Returns:
+
+- Gaussian variogram
+"""
+function gaussianvariogram(h::Number, sill::Number, range::Number, nugget::Number)
+	if h == 0.
+		return 0.
+	else
+		return (sill - nugget) * (1 - exp(-h * h / (3 * range * range))) + nugget
+	end
+end
 
 function distsquared(a, b)
 	result = 0.0
@@ -49,9 +115,6 @@ function krige(x0mat::Matrix, X::Matrix, Z::Vector, cov)
 end
 
 function krigenew(x0mat::Matrix, X::Matrix, Z::Vector, cov)
-	if size(X, 2) != length(Z)
-		error("number of points and observations don't match")
-	end
 	result = zeros(size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
 	covmat = getcovmat(X, cov)
@@ -138,7 +201,8 @@ end
 
 function estimationerror(w::Vector, x0::Vector, X::Matrix, cov::Function)
 	covmat = getcovmat(X, cov)
-	covvec = getcovvec(x0, X, cov)
+	covvec = Array{Float64}(size(X, 2))
+	getcovvec!(covvec, x0, X, cov)
 	cov0 = cov(0.)
 	return estimationerror(w, x0, X, covmat, covvec, cov0)
 end
