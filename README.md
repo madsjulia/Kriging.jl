@@ -1,13 +1,16 @@
-MADS (Model Analysis & Decision Support)
-=======================================
+Kriging
+==========
 
-[![julialang](http://pkg.julialang.org/badges/Mads_0.5.svg)](http://pkg.julialang.org/?pkg=Mads&ver=0.5)
-[![travis-ci](https://travis-ci.org/madsjulia/Mads.jl.svg?branch=master)](https://travis-ci.org/madsjulia/Mads.jl)
-[![appveyor](https://ci.appveyor.com/api/projects/status/github/madsjulia/Example.jl?branch=master&svg=true)](https://ci.appveyor.com/project/montyvesselinov/mads-jl/branch/master)
-[![coveralls.io](https://coveralls.io/repos/madsjulia/Mads.jl/badge.svg?branch=master)](https://coveralls.io/r/madsjulia/Mads.jl?branch=master)
-[![codecov.io](http://codecov.io/github/madsjulia/Mads.jl/coverage.svg?branch=master)](http://codecov.io/github/madsjulia/Mads.jl?branch=master)
+[![Build Status](https://travis-ci.org/madsjulia/Kriging.jl.svg?branch=master)](https://travis-ci.org/madsjulia/Kriging.jl)
+[![Coverage Status](https://coveralls.io/repos/madsjulia/Kriging.jl/badge.svg?branch=master)](https://coveralls.io/r/madsjulia/Kriging.jl?branch=master)
 
-[MADS](http://madsjulia.github.io/Mads.jl) is an integrated open-source high-performance computational (HPC) framework in [Julia](http://julialang.org).
+Gaussian process regression.
+Kriging is a module of [MADS](http://madsjulia.github.io/Mads.jl).
+
+MADS
+====
+
+[MADS](http://madsjulia.github.io/Mads.jl) (Model Analysis & Decision Support) is an integrated open-source high-performance computational (HPC) framework in [Julia](http://julialang.org).
 MADS can execute a wide range of data- and model-based analyses:
 
 * Sensitivity Analysis
@@ -23,15 +26,6 @@ MADS has been tested to perform HPC simulations on a wide-range multi-processor 
 MADS utilizes adaptive rules and techniques which allows the analyses to be performed with a minimum user input.
 The code provides a series of alternative algorithms to execute each type of data- and model-based analyses.
 
-Example
-------
-```julia
-import Mads
-
-include(Mads.madsdir * "/../examples/contamination/contamination.jl")
-include(Mads.madsdir * "/../examples/bigdt/bigdt.jl")
-```
-
 Documentation
 =============
 
@@ -40,32 +34,30 @@ All the available MADS modules and functions are described at [madsjulia.github.
 Installation
 ============
 
-After starting Julia, execute:
-
 ```julia
 Pkg.add("Mads")
 ```
 
-Installation of MADS behind a firewall
+Installation behind a firewall
 ------------------------------
 
-Julia uses git for package management.
-Add in the `.gitconfig` file in your home directory to support git behind a firewall:
+Julia uses git for the package management.
+To install Julia packages behind a firewall, add the following lines in the `.gitconfig` file in your home directory:
 
-```
+```git
 [url "https://"]
         insteadOf = git://
 ```
 
 or execute:
 
-```
+```bash
 git config --global url."https://".insteadOf git://
 ```
 
-Set proxies executing the following lines in the bash command-line environment:
+Set proxies:
 
-```
+```bash
 export ftp_proxy=http://proxyout.<your_site>:8080
 export rsync_proxy=http://proxyout.<your_site>:8080
 export http_proxy=http://proxyout.<your_site>:8080
@@ -73,9 +65,10 @@ export https_proxy=http://proxyout.<your_site>:8080
 export no_proxy=.<your_site>
 ```
 
-For example, at LANL, you will need to execute the following lines in the bash command-line environment:
+For example, if you are doing this at LANL, you will need to execute the
+following lines in your bash command-line environment:
 
-```
+```bash
 export ftp_proxy=http://proxyout.lanl.gov:8080
 export rsync_proxy=http://proxyout.lanl.gov:8080
 export http_proxy=http://proxyout.lanl.gov:8080
@@ -89,7 +82,7 @@ MADS examples
 In Julia REPL, do the following commands:
 
 ```julia
-reload("Mads")
+import Mads
 ```
 
 To explore getting-started instructions, execute:
@@ -119,11 +112,10 @@ Developers
 
 * [Velimir (monty) Vesselinov](http://www.lanl.gov/orgs/ees/staff/monty) [(publications)](http://scholar.google.com/citations?user=sIFHVvwAAAAJ)
 * [Daniel O'Malley](http://www.lanl.gov/expertise/profiles/view/daniel-o'malley) [(publications)](http://scholar.google.com/citations?user=rPzCVjEAAAAJ)
-* [see also](https://github.com/madsjulia/Mads.jl/graphs/contributors)
+* [see also](https://github.com/madsjulia/Kriging.jl/graphs/contributors)
 
 Publications, Presentations, Projects
 =====================================
 
 * [mads.lanl.gov/](http://mads.lanl.gov/)
 * [ees.lanl.gov/monty](http://ees.lanl.gov/monty)
-
