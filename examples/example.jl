@@ -3,7 +3,7 @@ import PyPlot
 
 srand(0)
 X = [3.0 7 1 5 9; 3 2 7 9 6]
-Z = exp(randn(size(X, 2)))
+Z = exp.(randn(size(X, 2)))
 fig, ax = PyPlot.subplots()
 for i = 1:size(X, 2)
 	ax[:plot]([X[1, i]], [X[2, i]], "r.", ms=10)

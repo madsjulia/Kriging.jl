@@ -170,7 +170,7 @@ function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov, numneighbors, numobsn
 			end
 			j += 1
 		end
-		mu, var = krigenew(thisx0, bigX, bigZ, cov)
+		mu, var = krigevariance(thisx0, bigX, bigZ, cov)
 		z0[perm[i]] = mu[1] + sqrt(max(0., var[1])) * randn()
 		filledin[perm[i]] = true
 	end
