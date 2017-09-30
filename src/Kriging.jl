@@ -111,10 +111,13 @@ function simplekrige(mu, x0mat::Matrix, X::Matrix, Z::Vector, cov)
 end
 
 function krige(x0mat::Matrix, X::Matrix, Z::Vector, cov)
-	return krigenew(x0mat, X, Z, cov)[1]
+	return krigevariance(x0mat, X, Z, cov)[1]
 end
 
-function krigenew(x0mat::Matrix, X::Matrix, Z::Vector, cov)
+function krigevariance(x0mat::Matrix, X::Matrix, Z::Vector, cov)
+	if size(X, 2) != length(Z)
+		error("number of points and observations don't match")
+	end
 	result = zeros(size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
 	covmat = getcovmat(X, cov)
