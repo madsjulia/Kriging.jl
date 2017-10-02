@@ -4,7 +4,7 @@ Kriging
 [![Build Status](https://travis-ci.org/madsjulia/Kriging.jl.svg?branch=master)](https://travis-ci.org/madsjulia/Kriging.jl)
 [![Coverage Status](https://coveralls.io/repos/madsjulia/Kriging.jl/badge.svg?branch=master)](https://coveralls.io/r/madsjulia/Kriging.jl?branch=master)
 
-Gaussian process regression.
+Gaussian process regressions and simulations.
 Kriging is a module of [MADS](http://madsjulia.github.io/Mads.jl).
 
 MADS
