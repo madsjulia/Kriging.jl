@@ -32,7 +32,7 @@ Returns:
 
 - covariance
 """
-expcov(h::Number, maxcov::Number, scale::Number) = maxcov * exp(-h / scale) + (h > 0 ? 0. : nugget)
+expcov(h::Number, maxcov::Number, scale::Number, nugget::Number=0.) = maxcov * exp(-h / scale) + (h > 0 ? 0. : nugget)
 
 """
 Spherical spatial covariance function
@@ -47,7 +47,7 @@ Returns:
 
 - covariance
 """
-sphericalcov(h::Number, maxcov::Number, scale::Number) = (h <= scale ? maxcov * (1 - 1.5 * h / (scale) + .5 * (h / scale) ^ 3) : 0.) + (h > 0 ? 0. : nugget)
+sphericalcov(h::Number, maxcov::Number, scale::Number, nugget::Number=0.) = (h <= scale ? maxcov * (1 - 1.5 * h / (scale) + .5 * (h / scale) ^ 3) : 0.) + (h > 0 ? 0. : nugget)
 """
 Spherical variogram
 
@@ -61,7 +61,7 @@ Returns:
 
 - Spherical variogram
 """
-function sphericalvariogram(h::Number, sill::Number, range::Number, nugget::Number)
+function sphericalvariogram(h::Number, sill::Number, range::Number, nugget::Number=0.)
 	if h == 0.
 		return 0.
 	elseif h < range
@@ -84,7 +84,7 @@ Returns:
 
 - Exponential variogram
 """
-function exponentialvariogram(h::Number, sill::Number, range::Number, nugget::Number)
+function exponentialvariogram(h::Number, sill::Number, range::Number, nugget::Number=0.)
 	if h == 0.
 		return 0.
 	else
@@ -113,6 +113,14 @@ function gaussianvariogram(h::Number, sill::Number, range::Number, nugget::Numbe
 	end
 end
 
+function distance(a, b)
+	result = 0.0
+	for i = 1:length(a)
+		result += (a[i] - b[i])
+	end
+	return result
+end
+
 function distsquared(a, b)
 	result = 0.0
 	for i = 1:length(a)
@@ -126,7 +134,7 @@ function inversedistance(x0mat::Matrix, X::Matrix, Z::Vector, pow::Number)
 	weights = Array{Float64}(size(X, 2))
 	for i = 1:size(x0mat, 2)
 		for j = 1:size(X, 2)
-			weights[j] = 1 / distsquared(x0mat[:, i], X[:, j]) ^ (.5 * pow)
+			weights[j] = 1 / distance(x0mat[:, i], X[:, j]) ^ pow
 		end
 		result[i] = dot(weights, Z) / sum(weights)
 	end
