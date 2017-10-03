@@ -3,10 +3,51 @@ module Kriging
 import NearestNeighbors
 import DocumentFunction
 
-gaussiancov(h, maxcov, scale, nugget=0.) = maxcov * exp(-(h * h) / (scale * scale)) + (h > 0 ? 0. : nugget)
-expcov(h, maxcov, scale, nugget=0.) = maxcov * exp(-h / scale) + (h > 0 ? 0. : nugget)
-sphericalcov(h, maxcov, scale, nugget=0.) = (h <= scale ? maxcov * (1 - 1.5 * h / (scale) + .5 * (h / scale) ^ 3) : 0.) + (h > 0 ? 0. : nugget)
 
+"""
+Gaussian spatial covariance function
+
+$(DocumentFunction.documentfunction(gaussiancov;
+argtext=Dict("h"=>"separation distance",
+            "maxcov"=>"maximum covariance",
+            "scale"=>"scale",
+            "nugget"=>"nugget")))
+
+Returns:
+
+- covariance
+"""
+gaussiancov(h::Number, maxcov::Number, scale::Number, nugget=Number=0.) = maxcov * exp(-(h * h) / (scale * scale)) + (h > 0 ? 0. : nugget)
+
+"""
+Exponential spatial covariance function
+
+$(DocumentFunction.documentfunction(expcov;
+argtext=Dict("h"=>"separation distance",
+            "maxcov"=>"maximum covariance",
+            "scale"=>"scale",
+            "nugget"=>"nugget")))
+
+Returns:
+
+- covariance
+"""
+expcov(h::Number, maxcov::Number, scale::Number) = maxcov * exp(-h / scale) + (h > 0 ? 0. : nugget)
+
+"""
+Spherical spatial covariance function
+
+$(DocumentFunction.documentfunction(sphericalcov;
+argtext=Dict("h"=>"separation distance",
+            "maxcov"=>"max covariance",
+            "scale"=>"scale",
+            "nugget"=>"nugget")))
+
+Returns:
+
+- covariance
+"""
+sphericalcov(h::Number, maxcov::Number, scale::Number) = (h <= scale ? maxcov * (1 - 1.5 * h / (scale) + .5 * (h / scale) ^ 3) : 0.) + (h > 0 ? 0. : nugget)
 """
 Spherical variogram
 
@@ -80,7 +121,7 @@ function distsquared(a, b)
 	return result
 end
 
-function inversedistance(x0mat::Matrix, X::Matrix, Z::Vector, pow)
+function inversedistance(x0mat::Matrix, X::Matrix, Z::Vector, pow::Number)
 	result = Array{Float64}(size(x0mat, 2))
 	weights = Array{Float64}(size(X, 2))
 	for i = 1:size(x0mat, 2)
@@ -92,7 +133,21 @@ function inversedistance(x0mat::Matrix, X::Matrix, Z::Vector, pow)
 	return result
 end
 
-function simplekrige(mu, x0mat::Matrix, X::Matrix, Z::Vector, cov)
+
+"""
+Simple Kriging
+
+$(DocumentFunction.documentfunction(simplekrige;
+argtext=Dict("x0mat"=>"point coordinates at which to obtain kriging estimates",
+            "X"=>"coordinates of the observation (conditioning) data",
+            "Z"=>"values for the observation (conditioning) data",
+            "cov"=>"spatial covariance function")))
+
+Returns:
+
+- kriging estimates at `x0mat`
+"""
+function simplekrige(mu, x0mat::Matrix, X::Matrix, Z::Vector, cov::Function)
 	result = fill(mu, size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
 	covmat = getcovmat(X, cov)
@@ -110,11 +165,38 @@ function simplekrige(mu, x0mat::Matrix, X::Matrix, Z::Vector, cov)
 	return result, resultvariance
 end
 
-function krige(x0mat::Matrix, X::Matrix, Z::Vector, cov)
+"""
+Ordinary Kriging
+
+$(DocumentFunction.documentfunction(krige;
+argtext=Dict("x0mat"=>"point coordinates at which to obtain kriging estimates",
+            "X"=>"coordinates of the observation (conditioning) data",
+            "Z"=>"values for the observation (conditioning) data",
+            "cov"=>"spatial covariance function")))
+
+Returns:
+
+- kriging estimates at `x0mat`
+"""
+function krige(x0mat::Matrix, X::Matrix, Z::Vector, cov::Function)
 	return krigevariance(x0mat, X, Z, cov)[1]
 end
 
-function krigevariance(x0mat::Matrix, X::Matrix, Z::Vector, cov)
+"""
+Ordinary Kriging plus variance
+
+$(DocumentFunction.documentfunction(krige;
+argtext=Dict("x0mat"=>"point coordinates at which to obtain kriging estimates",
+            "X"=>"coordinates of the observation (conditioning) data",
+            "Z"=>"values for the observation (conditioning) data",
+            "cov"=>"spatial covariance function")))
+
+Returns:
+
+- kriging estimates at `x0mat`
+- variance estimates at `x0mat`
+"""
+function krigevariance(x0mat::Matrix, X::Matrix, Z::Vector, cov::Function)
 	if size(X, 2) != length(Z)
 		error("number of points and observations don't match")
 	end
@@ -142,7 +224,20 @@ function krigevariance(x0mat::Matrix, X::Matrix, Z::Vector, cov)
 	return result, resultvariance
 end
 
-function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov, numneighbors, numobsneighbors=length(Z); neighborsearch=min(1000, size(x0mat, 2)))
+"""
+Conditional Gaussian simulation
+
+$(DocumentFunction.documentfunction(krige;
+argtext=Dict("x0mat"=>"point coordinates at which to obtain kriging estimates",
+            "X"=>"coordinates of the observation (conditioning) data",
+            "Z"=>"values for the observation (conditioning) data",
+            "cov"=>"spatial covariance function")))
+
+Returns:
+
+- conditional estimates at `x0mat`
+"""
+function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov::Function, numneighbors, numobsneighbors=length(Z); neighborsearch=min(1000, size(x0mat, 2)))
 	kdtree = NearestNeighbors.KDTree(x0mat)
 	nnindices, _ = NearestNeighbors.knn(kdtree, x0mat, neighborsearch, true)
 	obs_kdtree = NearestNeighbors.KDTree(X)
@@ -177,6 +272,17 @@ function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov, numneighbors, numobsn
 	return z0
 end
 
+"""
+Get spatial covariance matrix
+
+$(DocumentFunction.documentfunction(getcovmat;
+argtext=Dict("X"=>"matrix with coordinates of the data points (x or y)",
+            "cov"=>"spatial covariance function")))
+
+Returns:
+
+- spatial covariance matrix
+"""
 function getcovmat(X::Matrix, cov::Function)
 	covmat = Array{Float64}((size(X, 2), size(X, 2)))
 	cov0 = cov(0)
@@ -190,6 +296,19 @@ function getcovmat(X::Matrix, cov::Function)
 	return covmat
 end
 
+"""
+Get spatial covariance vector
+
+$(DocumentFunction.documentfunction(getcovvec!;
+argtext=Dict("covvec"=>"spatial covariance vector",
+            "x0"=>"vector with coordinates of the estimation points (x or y)",
+            "X"=>"matrix with coordinates of the data points",
+            "cov"=>"spatial covariance function")))
+
+Returns:
+
+- spatial covariance vector
+"""
 function getcovvec!(covvec, x0::Vector, X::Matrix, cov::Function)
 	for i = 1:size(X, 2)
 		d = 0.
@@ -213,6 +332,23 @@ end
 function estimationerror(w::Vector, x0::Vector, X::Matrix, covmat::Matrix, covvec::Vector, cov0::Number)
 	return cov0 + dot(w, covmat * w) - 2 * dot(w, covvec)
 end
+
+@doc """
+Estimate kriging error
+
+$(DocumentFunction.documentfunction(estimationerror;
+argtext=Dict("w"=>"kriging weights",
+            "x0"=>"estimated locations",
+            "X"=>"observation matrix",
+            "cov"=>"spatial covariance function",
+            "covmat"=>"covariance matrix",
+            "covvec"=>"covariance vector",
+            "cov0"=>"zero-separation covariance")))
+
+Returns:
+
+- estimation kriging error
+""" estimationerror
 
 function getgridpoints(xs, ys)
 	gridxyz = Array{Float64}(2, length(xs) * length(ys))
