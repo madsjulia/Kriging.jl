@@ -3,15 +3,14 @@ module Kriging
 import NearestNeighbors
 import DocumentFunction
 
-
 """
 Gaussian spatial covariance function
 
 $(DocumentFunction.documentfunction(gaussiancov;
 argtext=Dict("h"=>"separation distance",
-            "maxcov"=>"maximum covariance",
-            "scale"=>"scale",
-            "nugget"=>"nugget")))
+			"maxcov"=>"maximum covariance",
+			"scale"=>"scale",
+			"nugget"=>"nugget")))
 
 Returns:
 
@@ -24,9 +23,9 @@ Exponential spatial covariance function
 
 $(DocumentFunction.documentfunction(expcov;
 argtext=Dict("h"=>"separation distance",
-            "maxcov"=>"maximum covariance",
-            "scale"=>"scale",
-            "nugget"=>"nugget")))
+			"maxcov"=>"maximum covariance",
+			"scale"=>"scale",
+			"nugget"=>"nugget")))
 
 Returns:
 
@@ -39,9 +38,9 @@ Spherical spatial covariance function
 
 $(DocumentFunction.documentfunction(sphericalcov;
 argtext=Dict("h"=>"separation distance",
-            "maxcov"=>"max covariance",
-            "scale"=>"scale",
-            "nugget"=>"nugget")))
+			"maxcov"=>"max covariance",
+			"scale"=>"scale",
+			"nugget"=>"nugget")))
 
 Returns:
 
@@ -53,9 +52,9 @@ Spherical variogram
 
 $(DocumentFunction.documentfunction(sphericalvariogram;
 argtext=Dict("h"=>"separation distance",
-            "sill"=>"sill",
-            "range"=>"range",
-            "nugget"=>"nugget")))
+			"sill"=>"sill",
+			"range"=>"range",
+			"nugget"=>"nugget")))
 
 Returns:
 
@@ -76,9 +75,9 @@ Exponential variogram
 
 $(DocumentFunction.documentfunction(exponentialvariogram;
 argtext=Dict("h"=>"separation distance",
-            "sill"=>"sill",
-            "range"=>"range",
-            "nugget"=>"nugget")))
+			"sill"=>"sill",
+			"range"=>"range",
+			"nugget"=>"nugget")))
 
 Returns:
 
@@ -97,9 +96,9 @@ Gaussian variogram
 
 $(DocumentFunction.documentfunction(gaussianvariogram;
 argtext=Dict("h"=>"separation distance",
-            "sill"=>"sill",
-            "range"=>"range",
-            "nugget"=>"nugget")))
+			"sill"=>"sill",
+			"range"=>"range",
+			"nugget"=>"nugget")))
 
 Returns:
 
@@ -141,15 +140,14 @@ function inversedistance(x0mat::Matrix, X::Matrix, Z::Vector, pow::Number)
 	return result
 end
 
-
 """
 Simple Kriging
 
 $(DocumentFunction.documentfunction(simplekrige;
 argtext=Dict("x0mat"=>"point coordinates at which to obtain kriging estimates",
-            "X"=>"coordinates of the observation (conditioning) data",
-            "Z"=>"values for the observation (conditioning) data",
-            "cov"=>"spatial covariance function")))
+			"X"=>"coordinates of the observation (conditioning) data",
+			"Z"=>"values for the observation (conditioning) data",
+			"cov"=>"spatial covariance function")))
 
 Returns:
 
@@ -178,9 +176,9 @@ Ordinary Kriging
 
 $(DocumentFunction.documentfunction(krige;
 argtext=Dict("x0mat"=>"point coordinates at which to obtain kriging estimates",
-            "X"=>"coordinates of the observation (conditioning) data",
-            "Z"=>"values for the observation (conditioning) data",
-            "cov"=>"spatial covariance function")))
+			"X"=>"coordinates of the observation (conditioning) data",
+			"Z"=>"values for the observation (conditioning) data",
+			"cov"=>"spatial covariance function")))
 
 Returns:
 
@@ -195,9 +193,9 @@ Ordinary Kriging plus variance
 
 $(DocumentFunction.documentfunction(krige;
 argtext=Dict("x0mat"=>"point coordinates at which to obtain kriging estimates",
-            "X"=>"coordinates of the observation (conditioning) data",
-            "Z"=>"values for the observation (conditioning) data",
-            "cov"=>"spatial covariance function")))
+			"X"=>"coordinates of the observation (conditioning) data",
+			"Z"=>"values for the observation (conditioning) data",
+			"cov"=>"spatial covariance function")))
 
 Returns:
 
@@ -237,9 +235,9 @@ Conditional Gaussian simulation
 
 $(DocumentFunction.documentfunction(krige;
 argtext=Dict("x0mat"=>"point coordinates at which to obtain kriging estimates",
-            "X"=>"coordinates of the observation (conditioning) data",
-            "Z"=>"values for the observation (conditioning) data",
-            "cov"=>"spatial covariance function")))
+			"X"=>"coordinates of the observation (conditioning) data",
+			"Z"=>"values for the observation (conditioning) data",
+			"cov"=>"spatial covariance function")))
 
 Returns:
 
@@ -285,7 +283,7 @@ Get spatial covariance matrix
 
 $(DocumentFunction.documentfunction(getcovmat;
 argtext=Dict("X"=>"matrix with coordinates of the data points (x or y)",
-            "cov"=>"spatial covariance function")))
+			"cov"=>"spatial covariance function")))
 
 Returns:
 
@@ -309,9 +307,9 @@ Get spatial covariance vector
 
 $(DocumentFunction.documentfunction(getcovvec!;
 argtext=Dict("covvec"=>"spatial covariance vector",
-            "x0"=>"vector with coordinates of the estimation points (x or y)",
-            "X"=>"matrix with coordinates of the data points",
-            "cov"=>"spatial covariance function")))
+			"x0"=>"vector with coordinates of the estimation points (x or y)",
+			"X"=>"matrix with coordinates of the data points",
+			"cov"=>"spatial covariance function")))
 
 Returns:
 
@@ -346,12 +344,12 @@ Estimate kriging error
 
 $(DocumentFunction.documentfunction(estimationerror;
 argtext=Dict("w"=>"kriging weights",
-            "x0"=>"estimated locations",
-            "X"=>"observation matrix",
-            "cov"=>"spatial covariance function",
-            "covmat"=>"covariance matrix",
-            "covvec"=>"covariance vector",
-            "cov0"=>"zero-separation covariance")))
+			"x0"=>"estimated locations",
+			"X"=>"observation matrix",
+			"cov"=>"spatial covariance function",
+			"covmat"=>"covariance matrix",
+			"covvec"=>"covariance vector",
+			"cov0"=>"zero-separation covariance")))
 
 Returns:
 
@@ -386,6 +384,19 @@ function getgridpoints(xs, ys, zs)
 	end
 	return gridxyz
 end
+
+@doc """
+Get grid points
+
+$(DocumentFunction.documentfunction(getgridpoints;
+argtext=Dict("xs"=>"x-axis grid coordinates",
+			"ys"=>"y-axis grid coordinates",
+			"zs"=>"z-axis grid coordinates")))
+
+Returns:
+
+- grid points
+""" getgridpoints
 
 function grid2layers(obs, xs, ys, zs)
 	layers = Array{Array{Float64, 2}}(length(zs))
