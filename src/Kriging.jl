@@ -115,7 +115,7 @@ function gaussianvariogram(h::Number, sill::Number, range::Number, nugget::Numbe
 	end
 end
 
-function distance(a, b)
+function distance(a::AbstractArray, b::AbstractArray)
 	result = 0.0
 	for i = 1:length(a)
 		result += (a[i] - b[i])
@@ -123,7 +123,7 @@ function distance(a, b)
 	return result
 end
 
-function distsquared(a, b)
+function distsquared(a::AbstractArray, b::AbstractArray)
 	result = 0.0
 	for i = 1:length(a)
 		result += (a[i] - b[i]) ^ 2
@@ -131,7 +131,7 @@ function distsquared(a, b)
 	return result
 end
 
-function inversedistance(x0mat::Matrix, X::Matrix, Z::Vector, pow::Number)
+function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, pow::Number)
 	result = Array{Float64}(size(x0mat, 2))
 	weights = Array{Float64}(size(X, 2))
 	for i = 1:size(x0mat, 2)
@@ -156,7 +156,7 @@ Returns:
 
 - kriging estimates at `x0mat`
 """
-function simplekrige(mu, x0mat::Matrix, X::Matrix, Z::Vector, cov::Function)
+function simplekrige(mu, x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function)
 	result = fill(mu, size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
 	covmat = getcovmat(X, cov)
@@ -187,7 +187,7 @@ Returns:
 
 - kriging estimates at `x0mat`
 """
-function krige(x0mat::Matrix, X, Z::Vector, cov::Function)
+function krige(x0mat::AbstractMatrix, X, Z::AbstractVector, cov::Function)
 	return krigevariance(x0mat, X, Z, cov)[1]
 end
 
@@ -205,7 +205,7 @@ Returns:
 - kriging estimates at `x0mat`
 - variance estimates at `x0mat`
 """
-function krigevariance(x0mat::Matrix, X, Z::Vector, cov::Function)
+function krigevariance(x0mat::AbstractMatrix, X, Z::AbstractVector, cov::Function)
 	if size(X, 2) != length(Z)
 		error("number of points and observations don't match")
 	end
@@ -246,7 +246,7 @@ Returns:
 
 - conditional estimates at `x0mat`
 """
-function condsim(x0mat::Matrix, X::Matrix, Z::Vector, cov::Function, numneighbors, numobsneighbors=length(Z); neighborsearch=min(1000, size(x0mat, 2)))
+function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function, numneighbors, numobsneighbors=length(Z); neighborsearch=min(1000, size(x0mat, 2)))
 	kdtree = NearestNeighbors.KDTree(x0mat)
 	nnindices, _ = NearestNeighbors.knn(kdtree, x0mat, neighborsearch, true)
 	obs_kdtree = NearestNeighbors.KDTree(X)
@@ -292,7 +292,7 @@ Returns:
 
 - spatial covariance matrix
 """
-function getcovmat(X, cov::Function)
+function getcovmat(X::AbstractMatrix, cov::Function)
 	covmat = Array{Float64,2}(undef, size(X, 2), size(X, 2))
 	cov0 = cov(0)
 	for i = 1:size(X, 2)
@@ -318,7 +318,7 @@ Returns:
 
 - spatial covariance vector
 """
-function getcovvec!(covvec, x0::Vector, X, cov::Function)
+function getcovvec!(covvec, x0::AbstractVector, X, cov::Function)
 	for i = 1:size(X, 2)
 		d = 0.
 		for j = 1:size(X, 1)
@@ -330,7 +330,7 @@ function getcovvec!(covvec, x0::Vector, X, cov::Function)
 	return covvec
 end
 
-function estimationerror(w::Vector, x0::Vector, X, cov::Function)
+function estimationerror(w::AbstractVector, x0::AbstractVector, X, cov::Function)
 	covmat = getcovmat(X, cov)
 	covvec = Array{Float64}(undef, size(X, 2))
 	getcovvec!(covvec, x0, X, cov)
@@ -338,7 +338,7 @@ function estimationerror(w::Vector, x0::Vector, X, cov::Function)
 	return estimationerror(w, x0, X, covmat, covvec, cov0)
 end
 
-function estimationerror(w::Vector, x0::Vector, X, covmat, covvec::Vector, cov0::Number)
+function estimationerror(w::AbstractVector, x0::AbstractVector, X, covmat, covvec::AbstractVector, cov0::Number)
 	return cov0 + LinearAlgebra.dot(w, covmat * w) - 2 * LinearAlgebra.dot(w, covvec)
 end
 
@@ -359,7 +359,7 @@ Returns:
 - estimation kriging error
 """ estimationerror
 
-function getgridpoints(xs, ys)
+function getgridpoints(xs::AbstractVector, ys::AbstractVector)
 	gridxyz = Array{Float64}(2, length(xs) * length(ys))
 	i = 1
 	for x in xs
@@ -372,7 +372,7 @@ function getgridpoints(xs, ys)
 	return gridxyz
 end
 
-function getgridpoints(xs, ys, zs)
+function getgridpoints(xs::AbstractVector, ys::AbstractVector, zs::AbstractVector)
 	gridxyz = Array{Float64}(3, length(xs) * length(ys) * length(zs))
 	i = 1
 	for x in xs
@@ -401,7 +401,7 @@ Returns:
 - grid points
 """ getgridpoints
 
-function grid2layers(obs, xs, ys, zs)
+function grid2layers(obs::AbstractVector, xs::AbstractVector, ys::AbstractVector, zs::AbstractVector)
 	layers = Array{Array{Float64, 2}}(length(zs))
 	for k = 1:length(zs)
 		layers[k] = Array{Float64}(length(xs), length(ys))
