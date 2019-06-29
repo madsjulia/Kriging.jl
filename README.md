@@ -1,9 +1,9 @@
 Kriging
 ==========
 
-[![Kriging](http://pkg.julialang.org/badges/Kriging_0.5.svg)](http://pkg.julialang.org/?pkg=Kriging&ver=0.5)
+<!-- [![Kriging](http://pkg.julialang.org/badges/Kriging_0.5.svg)](http://pkg.julialang.org/?pkg=Kriging&ver=0.5)
 [![Kriging](http://pkg.julialang.org/badges/Kriging_0.6.svg)](http://pkg.julialang.org/?pkg=Kriging&ver=0.6)
-[![Kriging](http://pkg.julialang.org/badges/Kriging_0.7.svg)](http://pkg.julialang.org/?pkg=Kriging&ver=0.7)
+[![Kriging](http://pkg.julialang.org/badges/Kriging_0.7.svg)](http://pkg.julialang.org/?pkg=Kriging&ver=0.7) -->
 [![Build Status](https://travis-ci.org/madsjulia/Kriging.jl.svg?branch=master)](https://travis-ci.org/madsjulia/Kriging.jl)
 [![Coverage Status](https://coveralls.io/repos/madsjulia/Kriging.jl/badge.svg?branch=master)](https://coveralls.io/r/madsjulia/Kriging.jl?branch=master)
 
