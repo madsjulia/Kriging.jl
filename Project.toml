@@ -1,0 +1,17 @@
+name = "Kriging"
+uuid = "6133562b-a8e8-5ea3-954b-37642b766dad"
+version = "0.4.0"
+
+[deps]
+DocumentFunction = "e1f3b4f0-2dc4-57d3-83f7-d4b7faf3b05b"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
+
+[compat]
+julia = "≥ 1.1.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
