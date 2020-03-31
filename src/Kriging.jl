@@ -5,6 +5,7 @@ module Kriging
 import NearestNeighbors
 import DocumentFunction
 import LinearAlgebra
+import Random
 
 """
 Gaussian spatial covariance function
@@ -132,8 +133,8 @@ function distsquared(a::AbstractArray, b::AbstractArray)
 end
 
 function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, pow::Number)
-	result = Array{Float64}(size(x0mat, 2))
-	weights = Array{Float64}(size(X, 2))
+	result = Array{Float64}(undef, size(x0mat, 2))
+	weights = Array{Float64}(undef, size(X, 2))
 	for i = 1:size(x0mat, 2)
 		for j = 1:size(X, 2)
 			weights[j] = 1 / distance(x0mat[:, i], X[:, j]) ^ pow
@@ -161,8 +162,8 @@ function simplekrige(mu, x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVe
 	resultvariance = fill(cov(0), size(x0mat, 2))
 	covmat = getcovmat(X, cov)
 	pinvcovmat = pinv(covmat)
-	covvec = Array{Float64}(size(X, 2))
-	x = Array{Float64}(size(X, 2))
+	covvec = Array{Float64}(undef, size(X, 2))
+	x = Array{Float64}(undef, size(X, 2))
 	for i = 1:size(x0mat, 2)
 		getcovvec!(covvec, x0mat[:, i], X, cov)
 		A_mul_B!(x, pinvcovmat, covvec)
@@ -251,17 +252,17 @@ function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, co
 	nnindices, _ = NearestNeighbors.knn(kdtree, x0mat, neighborsearch, true)
 	obs_kdtree = NearestNeighbors.KDTree(X)
 	nnindices_obs, _ = NearestNeighbors.knn(obs_kdtree, x0mat, numobsneighbors, true)
-	z0 = Array{Float64}(size(x0mat, 2))
+	z0 = Array{Float64}(undef, size(x0mat, 2))
 	filledin = fill(false, size(x0mat, 2))
-	perm = randperm(size(x0mat, 2))
+	perm = Random.randperm(size(x0mat, 2))
 	maxvar = 0.
 	for i = 1:size(x0mat, 2)
 		thisx0 = reshape(x0mat[:, perm[i]], size(x0mat, 1), 1)
 		neighbors = nnindices[perm[i]]
 		obs_neighbors = nnindices_obs[perm[i]]
 		numfilled = sum(filledin[neighbors])
-		bigX = Array{Float64}(size(x0mat, 1), min(numneighbors, numfilled) + numobsneighbors)
-		bigZ = Array{Float64}(min(numneighbors, numfilled) + numobsneighbors)
+		bigX = Array{Float64}(undef, size(x0mat, 1), min(numneighbors, numfilled) + numobsneighbors)
+		bigZ = Array{Float64}(undef, min(numneighbors, numfilled) + numobsneighbors)
 		bigX[:, 1:numobsneighbors] = X[:, obs_neighbors]
 		bigZ[1:numobsneighbors] = Z[obs_neighbors]
 		bigXcount = numobsneighbors + 1
@@ -293,7 +294,7 @@ Returns:
 - spatial covariance matrix
 """
 function getcovmat(X::AbstractMatrix, cov::Function)
-	covmat = Array{Float64,2}(undef, size(X, 2), size(X, 2))
+	covmat = Array{Float64}(undef, size(X, 2), size(X, 2))
 	cov0 = cov(0)
 	for i = 1:size(X, 2)
 		covmat[i, i] = cov0
@@ -360,8 +361,8 @@ Returns:
 """ estimationerror
 
 function getgridpoints(xs::AbstractVector, ys::AbstractVector)
-	gridxyz = Array{Float64}(2, length(xs) * length(ys))
-	i = 1
+	gridxyz = Array{Float64}(undef, 2, length(xs) * length(ys))
+	local i = 1
 	for x in xs
 		for y in ys
 			gridxyz[1, i] = x
@@ -373,8 +374,8 @@ function getgridpoints(xs::AbstractVector, ys::AbstractVector)
 end
 
 function getgridpoints(xs::AbstractVector, ys::AbstractVector, zs::AbstractVector)
-	gridxyz = Array{Float64}(3, length(xs) * length(ys) * length(zs))
-	i = 1
+	gridxyz = Array{Float64}(undef, 3, length(xs) * length(ys) * length(zs))
+	local i = 1
 	for x in xs
 		for y in ys
 			for z in zs
@@ -402,9 +403,9 @@ Returns:
 """ getgridpoints
 
 function grid2layers(obs::AbstractVector, xs::AbstractVector, ys::AbstractVector, zs::AbstractVector)
-	layers = Array{Array{Float64, 2}}(length(zs))
+	layers = Array{Array{Float64, 2}}(undef, length(zs))
 	for k = 1:length(zs)
-		layers[k] = Array{Float64}(length(xs), length(ys))
+		layers[k] = Array{Float64}(undef, length(xs), length(ys))
 		for i = 1:length(xs)
 			for j = 1:length(ys)
 				layers[k][i, j] = obs[k + (j - 1) * length(zs) + (i - 1) * length(zs) * length(ys)]
