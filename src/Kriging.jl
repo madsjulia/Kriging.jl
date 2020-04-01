@@ -361,18 +361,17 @@ Returns:
 """ estimationerror
 
 function getgridpoints(xs::AbstractVector, ys::AbstractVector)
-	gridxyz = Array{Float64}(undef, 2, length(xs) * length(ys))
+	gridxy = Array{Float64}(undef, 2, length(xs) * length(ys))
 	local i = 1
 	for x in xs
 		for y in ys
-			gridxyz[1, i] = x
-			gridxyz[2, i] = y
+			gridxy[1, i] = x
+			gridxy[2, i] = y
 			i += 1
 		end
 	end
-	return gridxyz
+	return gridxy
 end
-
 function getgridpoints(xs::AbstractVector, ys::AbstractVector, zs::AbstractVector)
 	gridxyz = Array{Float64}(undef, 3, length(xs) * length(ys) * length(zs))
 	local i = 1
