@@ -3,12 +3,12 @@ import PyPlot
 import Random
 
 Random.seed!(0)
-X = [3.0 7 1 5 9; 3 2 7 9 6]
+X = [3 7 1 5 9; 3 2 7 9 6]
 Z = exp.(randn(size(X, 2)))
 fig, ax = PyPlot.subplots()
 for i = 1:size(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
-	ax.text([X[1, i] + 0.1], [X[2, i] + 0.1], "$(Z[i])"[1:3], fontsize=16)
+	ax.text([X[1, i] + 0.1], [X[2, i] + 0.1], "$(round(Z[i]; sigdigits=2))", fontsize=16)
 end
 ax.plot([5], [5], "r.", ms=10)
 ax.text([5.1], [5.1], "?", fontsize=16)
@@ -26,14 +26,30 @@ krigedfield = Array{Float64}(undef, length(xs), length(ys))
 @time for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
 	krigedfield[i, j] = Kriging.krige(permutedims([x y]), X, Z, covfun)[1]
 end
+
 fig, ax = PyPlot.subplots()
-cax = ax.imshow(krigedfield', extent=[0, 10, 0, 10], origin="lower")
+cax = ax.imshow(permutedims(krigedfield), extent=[0, 10, 0, 10], origin="lower")
 for i = 1:size(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 end
 fig.colorbar(cax)
 display(fig); println()
 fig.savefig("kriging.pdf")
+PyPlot.close(fig)
+
+inversedistancefield = Array{Float64}(undef, length(xs), length(ys))
+@time for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
+	inversedistancefield[i, j] = Kriging.inversedistance(permutedims([x y]), X, Z, 1/2)[1]
+end
+
+fig, ax = PyPlot.subplots()
+cax = ax.imshow(permutedims(inversedistancefield), extent=[0, 10, 0, 10], origin="lower")
+for i = 1:size(X, 2)
+	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
+end
+fig.colorbar(cax)
+display(fig); println()
+fig.savefig("inversedistance.pdf")
 PyPlot.close(fig)
 
 x0mat = Array{Float64}(undef, 2, length(xs) * length(ys))
@@ -51,7 +67,7 @@ for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
 	k += 1
 end
 fig, ax = PyPlot.subplots()
-cax = ax.imshow(condsimfield', extent=[0, 10, 0, 10], origin="lower")
+cax = ax.imshow(permutedims(condsimfield), extent=[0, 10, 0, 10], origin="lower")
 for i = 1:size(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 end
