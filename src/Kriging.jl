@@ -137,7 +137,7 @@ function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVe
 	weights = Array{Float64}(undef, size(X, 2))
 	for i = 1:size(x0mat, 2)
 		for j = 1:size(X, 2)
-			weights[j] = 1. / distance(x0mat[:, i], X[:, j]) ^ pow
+			weights[j] = inv.(distance(x0mat[:, i], X[:, j]) ^ pow)
 		end
 		result[i] = LinearAlgebra.dot(weights, Z) / sum(weights)
 	end
