@@ -39,7 +39,7 @@ PyPlot.close(fig)
 
 inversedistancefield = Array{Float64}(undef, length(xs), length(ys))
 @time for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
-	inversedistancefield[i, j] = Kriging.inversedistance(permutedims([x y]), X, Z, 1/2)[1]
+	inversedistancefield[i, j] = Kriging.inversedistance(permutedims([x y]), X, Z, 2)[1]
 end
 
 fig, ax = PyPlot.subplots()

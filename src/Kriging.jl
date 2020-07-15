@@ -116,10 +116,10 @@ function gaussianvariogram(h::Number, sill::Number, range::Number, nugget::Numbe
 	end
 end
 
-function distance(a::AbstractArray, b::AbstractArray)
+function distance(a::AbstractArray, b::AbstractArray, pow::Number)
 	result = 0.0
 	for i = 1:length(a)
-		result += abs.(a[i] .- b[i])
+		result += abs.(a[i] .- b[i]) .^ pow
 	end
 	return result
 end
@@ -127,7 +127,7 @@ end
 function distsquared(a::AbstractArray, b::AbstractArray)
 	result = 0.0
 	for i = 1:length(a)
-		result += abs.(a[i] .- b[i]) ^ 2
+		result += abs.(a[i] .- b[i]) .^ 2
 	end
 	return result
 end
@@ -137,7 +137,7 @@ function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVe
 	weights = Array{Float64}(undef, size(X, 2))
 	for i = 1:size(x0mat, 2)
 		for j = 1:size(X, 2)
-			weights[j] = inv.(distance(x0mat[:, i], X[:, j]) ^ pow)
+			weights[j] = inv.(distance(x0mat[:, i], X[:, j], pow))
 		end
 		result[i] = LinearAlgebra.dot(weights, Z) / sum(weights)
 	end
