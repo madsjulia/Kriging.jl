@@ -250,7 +250,7 @@ Returns:
 function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function, numneighbors, numobsneighbors=length(Z); neighborsearch=min(1000, size(x0mat, 2)))
 	kdtree = NearestNeighbors.KDTree(x0mat)
 	nnindices, _ = NearestNeighbors.knn(kdtree, x0mat, neighborsearch, true)
-	obs_kdtree = NearestNeighbors.KDTree(X)
+	obs_kdtree = NearestNeighbors.KDTree(convert.(Float64, X))
 	nnindices_obs, _ = NearestNeighbors.knn(obs_kdtree, x0mat, numobsneighbors, true)
 	z0 = Array{Float64}(undef, size(x0mat, 2))
 	filledin = fill(false, size(x0mat, 2))
