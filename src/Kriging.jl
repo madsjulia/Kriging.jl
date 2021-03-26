@@ -132,14 +132,19 @@ function distsquared(a::AbstractArray, b::AbstractArray)
 	return result
 end
 
-function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, pow::Number)
+function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, pow::Number; cutoff::Number=0)
 	result = Array{Float64}(undef, size(x0mat, 2))
 	weights = Array{Float64}(undef, size(X, 2))
 	for i = 1:size(x0mat, 2)
 		for j = 1:size(X, 2)
 			weights[j] = inv.(distance(x0mat[:, i], X[:, j], pow))
 		end
-		result[i] = LinearAlgebra.dot(weights, Z) / sum(weights)
+		sw = sum(weights)
+		if sw > cutoff
+			result[i] = LinearAlgebra.dot(weights, Z) / sw
+		else
+			result[i] = NaN
+		end
 	end
 	return result
 end

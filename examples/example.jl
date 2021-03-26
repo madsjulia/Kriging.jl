@@ -27,8 +27,10 @@ krigedfield = Array{Float64}(undef, length(xs), length(ys))
 	krigedfield[i, j] = Kriging.krige(permutedims([x y]), X, Z, covfun)[1]
 end
 
+krigedfield2 = reshape(Kriging.krige(permutedims([xs ys]), X, Z, covfun), 100, 100)
+
 fig, ax = PyPlot.subplots()
-cax = ax.imshow(permutedims(krigedfield), extent=[0, 10, 0, 10], origin="lower")
+cax = ax.imshow(permutedims(krigedfield2), extent=[0, 10, 0, 10], origin="lower")
 for i = 1:size(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 end
