@@ -116,11 +116,11 @@ Developers
 ==========
 
 * [Daniel O'Malley](http://www.lanl.gov/expertise/profiles/view/daniel-o'malley) [(publications)](http://scholar.google.com/citations?user=rPzCVjEAAAAJ)
-* [Velimir (monty) Vesselinov](http://www.lanl.gov/orgs/ees/staff/monty) [(publications)](http://scholar.google.com/citations?user=sIFHVvwAAAAJ)
+* [Velimir (monty) Vesselinov](https://montyv.github.io/) [(publications)](http://scholar.google.com/citations?user=sIFHVvwAAAAJ)
 * [see also](https://github.com/madsjulia/Kriging.jl/graphs/contributors)
 
 Publications, Presentations, Projects
 =====================================
 
-* [mads.lanl.gov](http://mads.lanl.gov)
-* [ees.lanl.gov/monty](http://ees.lanl.gov/monty)
+* [madsjulia.github.io](https://madsjulia.github.io)
+* [montyv.github.io)]((https://montyv.github.io)
