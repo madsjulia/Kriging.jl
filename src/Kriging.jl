@@ -195,8 +195,8 @@ Returns:
 
 - kriging estimates at `x0mat`
 """
-function krige(x0mat::AbstractMatrix, X, Z::AbstractVector, cov::Function)
-	return krigevariance(x0mat, X, Z, cov)[1]
+function krige(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function; kw...)
+	return first(krigevariance(x0mat, X, Z, cov; kw...))
 end
 
 """
@@ -213,9 +213,20 @@ Returns:
 - kriging estimates at `x0mat`
 - variance estimates at `x0mat`
 """
-function krigevariance(x0mat::AbstractMatrix, X, Z::AbstractVector, cov::Function)
+function krigevariance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function; minwindow::Union{AbstractVector,Nothing}=nothing, maxwindow::Union{AbstractVector,Nothing}=nothing)
 	if size(X, 2) != length(Z)
-		error("number of points and observations don't match")
+		error("Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!")
+	end
+	if minwindow != nothing && maxwindow != nothing
+		if length(minwindow) != size(X, 1) || length(maxwindow) != size(X, 1)
+			error("minwindow and maxwindow must have the same length as the number of dimensions of the data!")
+		end
+		if any(minwindow .> maxwindow)
+			error("minwindow must be less than or equal to maxwindow!")
+		end
+		mask = vec(all(minwindow .< X .< maxwindow; dims=1))
+		X = X[:, mask]
+		Z = Z[mask]
 	end
 	result = zeros(size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
@@ -326,7 +337,7 @@ Returns:
 
 - spatial covariance vector
 """
-function getcovvec!(covvec, x0::AbstractVector, X, cov::Function)
+function getcovvec!(covvec, x0::AbstractVector, X::AbstractMatrix, cov::Function)
 	for i = 1:size(X, 2)
 		d = 0.
 		for j = 1:size(X, 1)
