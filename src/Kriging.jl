@@ -130,7 +130,14 @@ function distsquared(a::AbstractArray, b::AbstractArray)
 	return result
 end
 
-function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, pow::Number; cutoff::Number=0)
+function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, f::Function; pow::Number=2, cutoff::Number=0)
+	v = inversedistance(x0mat, X, Z, pow; cutoff=cutoff)
+	return v, []
+end
+
+function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, pow::Number=2; cutoff::Number=0)
+	@assert size(X, 2) == length(Z) "Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!"
+	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
 	iz = .!isnan.(Z)
 	Xn = X[:,iz]
 	result = Array{Float64}(undef, size(x0mat, 2))
@@ -163,6 +170,8 @@ Returns:
 - kriging estimates at `x0mat`
 """
 function simplekrige(mu, x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function)
+	@assert size(X, 2) == length(Z) "Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!"
+	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
 	result = fill(mu, size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
 	covmat = getcovmat(X, cov)
@@ -212,30 +221,33 @@ Returns:
 - variance estimates at `x0mat`
 """
 function krigevariance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function; minwindow::Union{AbstractVector,Nothing}=nothing, maxwindow::Union{AbstractVector,Nothing}=nothing)
-	if size(X, 2) != length(Z)
-		error("Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!")
-	end
+	@assert size(X, 2) == length(Z) "Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!"
+	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
+	result = zeros(size(x0mat, 2))
+	resultvariance = fill(cov(0), size(x0mat, 2))
 	if minwindow != nothing && maxwindow != nothing
 		if length(minwindow) != size(X, 1) || length(maxwindow) != size(X, 1)
-			error("minwindow and maxwindow must have the same length as the number of dimensions of the data!")
+			@error("minwindow and maxwindow must have the same length as the number of dimensions of the data!")
+			result = fill(NaN, size(x0mat, 2))
+			return result, resultvariance
 		end
 		if any(minwindow .> maxwindow)
-			error("minwindow must be less than or equal to maxwindow!")
+			@error("minwindow must be less than or equal to maxwindow!")
+			result = fill(NaN, size(x0mat, 2))
+			return result, resultvariance
 		end
 		mask = vec(all(minwindow .< X .< maxwindow; dims=1))
 		X = X[:, mask]
 		Z = Z[mask]
 	end
-	result = zeros(size(x0mat, 2))
-	resultvariance = fill(cov(0), size(x0mat, 2))
+
 	covmat = getcovmat(X, cov)
-	bigmat = [covmat ones(size(X, 2)); ones(size(X, 2))' 0.]
-	ws = Array{Float64}(undef, size(x0mat, 2))
-	bigvec = Array{Float64}(undef, size(X, 2) + 1)
+	bigmat = [covmat ones(size(X, 2)); permutedims(ones(size(X, 2))) 0.]
+	bigvec = Vector{Float64}(undef, size(X, 2) + 1)
 	bigvec[end] = 1
 	bigmatpinv = LinearAlgebra.pinv(bigmat)
-	covvec = Array{Float64}(undef, size(X, 2))
-	x = Array{Float64}(undef, size(X, 2) + 1)
+	covvec = Vector{Float64}(undef, size(X, 2))
+	x = Vector{Float64}(undef, size(X, 2) + 1)
 	for i = 1:size(x0mat, 2)
 		bigvec[1:end-1] = getcovvec!(covvec, x0mat[:, i], X, cov)
 		bigvec[end] = 1
@@ -263,22 +275,21 @@ Returns:
 
 - conditional estimates at `x0mat`
 """
-function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function, numneighbors, numobsneighbors=length(Z); neighborsearch=min(1000, size(x0mat, 2)))
-	kdtree = NearestNeighbors.KDTree(x0mat)
-	nnindices, _ = NearestNeighbors.knn(kdtree, x0mat, neighborsearch, true)
-	obs_kdtree = NearestNeighbors.KDTree(convert.(Float64, X))
-	nnindices_obs, _ = NearestNeighbors.knn(obs_kdtree, x0mat, numobsneighbors, true)
-	z0 = Array{Float64}(undef, size(x0mat, 2))
+function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function, numneighbors, numobsneighbors=min(1000, size(X, 2)); neighborsearch=min(1000, size(x0mat, 2)))
+	@assert size(X, 2) == length(Z) "Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!"
+	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
+	nnindices, nnindices_obs = kdtree_indices(x0mat, X; neighborsearch=neighborsearch, numobsneighbors=numobsneighbors)
+	z0 = Vector{Float64}(undef, size(x0mat, 2))
 	filledin = fill(false, size(x0mat, 2))
 	perm = Random.randperm(size(x0mat, 2))
-	maxvar = 0.
 	for i = 1:size(x0mat, 2)
 		thisx0 = reshape(x0mat[:, perm[i]], size(x0mat, 1), 1)
 		neighbors = nnindices[perm[i]]
 		obs_neighbors = nnindices_obs[perm[i]]
 		numfilled = sum(filledin[neighbors])
-		bigX = Array{Float64}(undef, size(x0mat, 1), min(numneighbors, numfilled) + numobsneighbors)
-		bigZ = Array{Float64}(undef, min(numneighbors, numfilled) + numobsneighbors)
+		obs_size = min(numneighbors, numfilled) + numobsneighbors
+		bigX = Matrix{Float64}(undef, size(x0mat, 1), obs_size)
+		bigZ = Vector{Float64}(undef, obs_size)
 		bigX[:, 1:numobsneighbors] = X[:, obs_neighbors]
 		bigZ[1:numobsneighbors] = Z[obs_neighbors]
 		bigXcount = numobsneighbors + 1
@@ -296,6 +307,42 @@ function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, co
 		filledin[perm[i]] = true
 	end
 	return z0
+end
+
+function interpolate_neighborhood(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function, numneighbors, numobsneighbors=min(1000, size(X, 2)); neighborsearch=min(1000, size(x0mat, 2)), interpolate=krigevariance, return_variance::Bool=false, kw...)
+	@assert size(X, 2) == length(Z) "Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!"
+	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
+	_, nnindices_obs = kdtree_indices(x0mat, X; neighborsearch=neighborsearch, numobsneighbors=numobsneighbors)
+	z0 = Vector{Float64}(undef, size(x0mat, 2))
+	if return_variance
+		var0 = Vector{Float64}(undef, size(x0mat, 2))
+	end
+	for i = 1:size(x0mat, 2)
+		obs_neighbors = nnindices_obs[i]
+		mu, var = interpolate(reshape(x0mat[:, i], size(x0mat, 1), 1), X[:, obs_neighbors], Z[obs_neighbors], cov; kw...)
+		z0[i] = mu[1]
+		if return_variance
+			var0[i] = var[1]
+		end
+	end
+	if return_variance
+		return z0, var0
+	else
+		return z0
+	end
+end
+
+function kdtree_indices(x0mat::AbstractMatrix{T}, X::AbstractMatrix=Matrix{T}(undef, 0, 0); neighborsearch=min(1000, size(x0mat, 2)), numobsneighbors=min(1000, size(X, 2))) where T <: Real
+	kdtree = NearestNeighbors.KDTree(x0mat)
+	nnindices, _ = NearestNeighbors.knn(kdtree, x0mat, neighborsearch, true)
+	if numobsneighbors > 0 && size(X, 2) > 0
+		@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
+		obs_kdtree = NearestNeighbors.KDTree(X)
+		nnindices_obs, _ = NearestNeighbors.knn(obs_kdtree, x0mat, numobsneighbors, true)
+		return nnindices, nnindices_obs
+	else
+		return nnindices, []
+	end
 end
 
 """
