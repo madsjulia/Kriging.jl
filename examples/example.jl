@@ -25,6 +25,8 @@ PyPlot.close(fig)
 covfun(h) = Kriging.expcov(h, 0.1, 3)
 xs = collect(range(0; stop=10, length=100))
 ys = collect(range(0, stop=10, length=100))
+x0mat = Kriging.getgridpoints(xs, ys)
+
 krigedfield = Array{Float64}(undef, length(xs), length(ys))
 @time for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
 	krigedfield[i, j] = Kriging.krige(permutedims([x y]), X, Z, covfun)[1]
@@ -41,20 +43,8 @@ display(fig); println()
 fig.savefig("kriging.pdf")
 PyPlot.close(fig)
 
-x0mat = Array{Float64}(undef, 2, length(xs) * length(ys))
-global k = 1
-for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
-	x0mat[1, k] = x
-	x0mat[2, k] = y
-	global k += 1
-end
-@time z0 = Kriging.interpolate_neighborhood(x0mat, X, Z, covfun, 20; neighborsearch=50)
-kriging_neighborhood_field = Array{Float64}(undef, length(xs), length(ys))
-global k = 1
-for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
-	kriging_neighborhood_field[i, j] = z0[k]
-	global k += 1
-end
+@time z0 = Kriging.interpolate_neighborhood(x0mat, X, Z; cov=covfun, neighborsearch=50)
+kriging_neighborhood_field = Kriging.putgridpoints(xs, ys, z0)
 fig, ax = PyPlot.subplots()
 cax = ax.imshow(permutedims(kriging_neighborhood_field), extent=[0, 10, 0, 10], origin="lower")
 for i = 1:size(X, 2)
@@ -82,20 +72,8 @@ display(fig); println()
 fig.savefig("inversedistance.pdf")
 PyPlot.close(fig)
 
-x0mat = Array{Float64}(undef, 2, length(xs) * length(ys))
-global k = 1
-for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
-	x0mat[1, k] = x
-	x0mat[2, k] = y
-	global k += 1
-end
-@time z0 = Kriging.interpolate_neighborhood(x0mat, X, Z, covfun, 20; neighborsearch=50, interpolate=Kriging.inversedistance, pow=2)
-inversedistance_neighborhood_field = Array{Float64}(undef, length(xs), length(ys))
-global k = 1
-for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
-	inversedistance_neighborhood_field[i, j] = z0[k]
-	global k += 1
-end
+@time z0 = Kriging.interpolate_neighborhood(x0mat, X, Z; neighborsearch=50, interpolate=Kriging.inversedistance, pow=2)
+inversedistance_neighborhood_field = Kriging.putgridpoints(xs, ys, z0)
 fig, ax = PyPlot.subplots()
 cax = ax.imshow(permutedims(inversedistance_neighborhood_field), extent=[0, 10, 0, 10], origin="lower")
 for i = 1:size(X, 2)
@@ -107,20 +85,8 @@ display(fig); println()
 fig.savefig("inversedistance_neighborhood.pdf")
 PyPlot.close(fig)
 
-x0mat = Array{Float64}(undef, 2, length(xs) * length(ys))
-global k = 1
-for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
-	x0mat[1, k] = x
-	x0mat[2, k] = y
-	global k += 1
-end
 @time z0 = Kriging.condsim(x0mat, X, Z, covfun, 20; neighborsearch=50)
-condsimfield = Array{Float64}(undef, length(xs), length(ys))
-global k = 1
-for (i, x) in enumerate(xs), (j, y) in enumerate(ys)
-	condsimfield[i, j] = z0[k]
-	global k += 1
-end
+condsimfield = Kriging.putgridpoints(xs, ys, z0)
 fig, ax = PyPlot.subplots()
 cax = ax.imshow(permutedims(condsimfield), extent=[0, 10, 0, 10], origin="lower")
 for i = 1:size(X, 2)

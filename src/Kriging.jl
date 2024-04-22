@@ -5,6 +5,11 @@ import DocumentFunction
 import LinearAlgebra
 import Random
 
+"Test Kriging"
+function test()
+	include(joinpath(Base.pkgdir(Kriging), "test", "runtests.jl"))
+end
+
 """
 Gaussian spatial covariance function
 
@@ -171,7 +176,7 @@ Returns:
 """
 function simplekrige(mu, x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function)
 	@assert size(X, 2) == length(Z) "Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!"
-	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
+	@assert size(x0mat, 2) == size(X, 1) "Dimensions of data points ($(size(x0mat, 2))) and observations ($(size(X, 1))) do not match!"
 	result = fill(mu, size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
 	covmat = getcovmat(X, cov)
@@ -278,7 +283,7 @@ Returns:
 function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function, numneighbors, numobsneighbors=min(1000, size(X, 2)); neighborsearch=min(1000, size(x0mat, 2)))
 	@assert size(X, 2) == length(Z) "Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!"
 	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
-	nnindices, nnindices_obs = kdtree_indices(x0mat, X; neighborsearch=neighborsearch, numobsneighbors=numobsneighbors)
+	nnindices, nnindices_obs = kdtree_indices(x0mat, X; numpredneighbors=neighborsearch, numobsneighbors=numobsneighbors)
 	z0 = Vector{Float64}(undef, size(x0mat, 2))
 	filledin = fill(false, size(x0mat, 2))
 	perm = Random.randperm(size(x0mat, 2))
@@ -309,10 +314,10 @@ function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, co
 	return z0
 end
 
-function interpolate_neighborhood(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, cov::Function, numneighbors, numobsneighbors=min(1000, size(X, 2)); neighborsearch=min(1000, size(x0mat, 2)), interpolate=krigevariance, return_variance::Bool=false, kw...)
+function interpolate_neighborhood(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector; cov::Function=cov(h)=Kriging.expcov(h, 0.1, 3), numobsneighbors=min(1000, size(X, 2)), neighborsearch=min(1000, size(x0mat, 2)), interpolate=krigevariance, return_variance::Bool=false, cutoff::Number=0, kw...)
 	@assert size(X, 2) == length(Z) "Number of data points ($(size(X, 2))) and observations ($(length(Z))) do not match!"
 	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
-	_, nnindices_obs = kdtree_indices(x0mat, X; neighborsearch=neighborsearch, numobsneighbors=numobsneighbors)
+	_, nnindices_obs = kdtree_indices(x0mat, X; numpredneighbors=neighborsearch, numobsneighbors=numobsneighbors, cutoff_obs=cutoff)
 	z0 = Vector{Float64}(undef, size(x0mat, 2))
 	if return_variance
 		var0 = Vector{Float64}(undef, size(x0mat, 2))
@@ -332,17 +337,31 @@ function interpolate_neighborhood(x0mat::AbstractMatrix, X::AbstractMatrix, Z::A
 	end
 end
 
-function kdtree_indices(x0mat::AbstractMatrix{T}, X::AbstractMatrix=Matrix{T}(undef, 0, 0); neighborsearch=min(1000, size(x0mat, 2)), numobsneighbors=min(1000, size(X, 2))) where T <: Real
-	kdtree = NearestNeighbors.KDTree(x0mat)
-	nnindices, _ = NearestNeighbors.knn(kdtree, x0mat, neighborsearch, true)
-	if numobsneighbors > 0 && size(X, 2) > 0
-		@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
-		obs_kdtree = NearestNeighbors.KDTree(X)
-		nnindices_obs, _ = NearestNeighbors.knn(obs_kdtree, x0mat, numobsneighbors, true)
-		return nnindices, nnindices_obs
+function kdtree_indices(x_pred::AbstractMatrix{T}, x_obs::AbstractMatrix=Matrix{T}(undef, 0, 0); numpredneighbors=min(1000, size(x_pred, 2)), numobsneighbors=min(1000, size(x_obs, 2)), cutoff_pred::Number=0, cutoff_obs::Number=0) where T <: Real
+	if numpredneighbors > 0
+		kdtree = NearestNeighbors.KDTree(x_pred)
+		nnindices_pred, nndistances_pred = NearestNeighbors.knn(kdtree, x_pred, numpredneighbors, true)
+		if cutoff_pred > 0
+			for i = 1:length(nnindices_pred)
+				nnindices_pred[i] = nnindices_pred[i][nndistances_pred[i] .<= cutoff_pred]
+			end
+		end
 	else
-		return nnindices, []
+		nnindices_pred = []
 	end
+	if numobsneighbors > 0 && size(x_obs, 2) > 0
+		@assert size(x_pred, 1) == size(x_obs, 1) "Dimensions of data points ($(size(x_pred, 1))) and observations ($(size(x_obs, 1))) do not match!"
+		obs_kdtree = NearestNeighbors.KDTree(x_obs)
+		nnindices_obs, nndistances_obs = NearestNeighbors.knn(obs_kdtree, x_pred, numobsneighbors, true)
+		if cutoff_obs > 0
+			for i = 1:length(nnindices_obs)
+				nnindices_obs[i] = nnindices_obs[i][nndistances_obs[i] .<= cutoff_obs]
+			end
+		end
+	else
+		nndistances_obs = []
+	end
+	return nnindices_pred, nnindices_obs
 end
 
 """
@@ -396,7 +415,7 @@ end
 
 function estimationerror(w::AbstractVector, x0::AbstractVector, X, cov::Function)
 	covmat = getcovmat(X, cov)
-	covvec = Array{Float64}(undef, size(X, 2))
+	covvec = Vector{Float64}(undef, size(X, 2))
 	getcovvec!(covvec, x0, X, cov)
 	cov0 = cov(0.)
 	return estimationerror(w, x0, X, covmat, covvec, cov0)
@@ -423,8 +442,8 @@ Returns:
 - estimation kriging error
 """ estimationerror
 
-function getgridpoints(xs::AbstractVector, ys::AbstractVector)
-	gridxy = Array{Float64}(undef, 2, length(xs) * length(ys))
+function getgridpoints(xs::Union{AbstractVector,AbstractRange}, ys::Union{AbstractVector,AbstractRange})
+	gridxy = Matrix{Float64}(undef, 2, length(xs) * length(ys))
 	local i = 1
 	for x in xs
 		for y in ys
@@ -435,8 +454,8 @@ function getgridpoints(xs::AbstractVector, ys::AbstractVector)
 	end
 	return gridxy
 end
-function getgridpoints(xs::AbstractVector, ys::AbstractVector, zs::AbstractVector)
-	gridxyz = Array{Float64}(undef, 3, length(xs) * length(ys) * length(zs))
+function getgridpoints(xs::Union{AbstractVector,AbstractRange}, ys::Union{AbstractVector,AbstractRange}, zs::Union{AbstractVector,AbstractRange})
+	gridxyz = Matrix{Float64}(undef, 3, length(xs) * length(ys) * length(zs))
 	local i = 1
 	for x in xs
 		for y in ys
@@ -463,6 +482,19 @@ Returns:
 
 - grid points
 """ getgridpoints
+
+function putgridpoints(xs::Union{AbstractVector,AbstractRange}, ys::Union{AbstractVector,AbstractRange}, zs::AbstractVector)
+	@assert length(xs) * length(ys) == length(zs) "Number of grid points ($(length(xs) * length(ys))) and values ($(length(zs))) do not match!"
+	gridxy = Matrix{Float64}(undef, length(xs), length(ys))
+	local k = 1
+	for (i, _) in enumerate(xs)
+		for (j, _) in enumerate(ys)
+			gridxy[i, j] = zs[k]
+			k += 1
+		end
+	end
+	return gridxy
+end
 
 function grid2layers(obs::AbstractVector, xs::AbstractVector, ys::AbstractVector, zs::AbstractVector)
 	layers = Array{Array{Float64, 2}}(undef, length(zs))

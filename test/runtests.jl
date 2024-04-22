@@ -15,8 +15,8 @@ mycov1 = h->Kriging.gaussiancov(h, 2, 300)
 mycov2 = h->Kriging.expcov(h, 2, 300)
 mycov3 = h->Kriging.sphericalcov(h, 2, 300)
 
-x0 = [.5 .5; .49 .49; .01 .01; .99 1.; 0. 1.; 1. 0.]
-xs = [0. 0.; 0. 1.; 1. 0.; 1. 1.; 0.500001 0.5]'
+x0 = permutedims([.5 .5; .49 .49; .01 .01; .99 1.; 0. 1.; 1. 0.])
+xs = permutedims([0. 0.; 0. 1.; 1. 0.; 1. 1.; 0.500001 0.5])
 zs = [-20., .6, .4, 1., 20.]
 
 krige_results_1 = Kriging.krige(x0, xs, zs, mycov1)
@@ -48,9 +48,9 @@ estimation_error_3 = Kriging.estimationerror(ones(size(xs, 2)), zs, xs, mycov3)
 	end
 
 	@Test.testset "Krige" begin
-		@Test.test isapprox(krige_results_1, [19.8891, 19.8891], atol=0.1)
-		@Test.test isapprox(krige_results_2, [19.4586, 19.4586], atol=0.1)
-		@Test.test isapprox(krige_results_3, [19.4586, 19.4586], atol=0.1)
+		@Test.test isapprox(krige_results_1, [19.99993512367364, 19.778132898057812, -18.621832575427835, 1.4811239442322404, 0.6000381594407371, 0.39998541082022715], atol=0.1)
+		@Test.test isapprox(krige_results_2, [19.999945901520327, 19.172644554834168, -19.219551440274383, 1.2150507275634252, 0.5999999999977101, 0.3999999999961652], atol=0.1)
+		@Test.test isapprox(krige_results_3, [19.999945901706013, 19.17264693896976, -19.219551074375026, 1.2151032013981584, 0.600000000000781, 0.39999999999867536], atol=0.1)
 	 end
 
 	# Testing Kriging.estimationerror()
