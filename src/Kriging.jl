@@ -121,7 +121,7 @@ end
 
 function distance(a::AbstractArray, b::AbstractArray, pow::Number)
 	result = 0.0
-	for i = 1:length(a)
+	for i in eachindex(a)
 		result += abs.(a[i] .- b[i]) .^ pow
 	end
 	return result
@@ -129,7 +129,7 @@ end
 
 function distsquared(a::AbstractArray, b::AbstractArray)
 	result = 0.0
-	for i = 1:length(a)
+	for i in eachindex(a)
 		result += abs.(a[i] .- b[i]) .^ 2
 	end
 	return result
@@ -147,8 +147,8 @@ function inversedistance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVe
 	Xn = X[:,iz]
 	result = Array{Float64}(undef, size(x0mat, 2))
 	weights = Array{Float64}(undef, size(Xn, 2))
-	for i = 1:size(x0mat, 2)
-		for j = 1:size(Xn, 2)
+	for i in axes(x0mat, 2)
+		for j in axes(Xn, 2)
 			weights[j] = inv.(distance(x0mat[:, i], Xn[:, j], pow))
 		end
 		sw = sum(weights)
@@ -183,10 +183,10 @@ function simplekrige(mu, x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVe
 	pinvcovmat = pinv(covmat)
 	covvec = Array{Float64}(undef, size(X, 2))
 	x = Array{Float64}(undef, size(X, 2))
-	for i = 1:size(x0mat, 2)
+	for i in axes(x0mat, 2)
 		getcovvec!(covvec, x0mat[:, i], X, cov)
 		A_mul_B!(x, pinvcovmat, covvec)
-		for j = 1:size(X, 2)
+		for j in axes(X, 2)
 			result[i] += (Z[j] - mu) * x[j]
 			resultvariance[i] -= covvec[j] * x[j]
 		end
@@ -253,14 +253,14 @@ function krigevariance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVect
 	bigmatpinv = LinearAlgebra.pinv(bigmat)
 	covvec = Vector{Float64}(undef, size(X, 2))
 	x = Vector{Float64}(undef, size(X, 2) + 1)
-	for i = 1:size(x0mat, 2)
+	for i in axes(x0mat, 2)
 		bigvec[1:end-1] = getcovvec!(covvec, x0mat[:, i], X, cov)
 		bigvec[end] = 1
 		LinearAlgebra.mul!(x, bigmatpinv, bigvec)
-		for j = 1:size(X, 2)
+		for j in axes(X, 2)
 			result[i] += Z[j] * x[j]
 		end
-		for j = 1:length(bigvec)
+		for j in eachindex(bigvec)
 			resultvariance[i] -= bigvec[j] * x[j]
 		end
 	end
@@ -287,7 +287,7 @@ function condsim(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVector, co
 	z0 = Vector{Float64}(undef, size(x0mat, 2))
 	filledin = fill(false, size(x0mat, 2))
 	perm = Random.randperm(size(x0mat, 2))
-	for i = 1:size(x0mat, 2)
+	for i in axes(x0mat, 2)
 		thisx0 = reshape(x0mat[:, perm[i]], size(x0mat, 1), 1)
 		neighbors = nnindices[perm[i]]
 		obs_neighbors = nnindices_obs[perm[i]]
@@ -322,7 +322,7 @@ function interpolate_neighborhood(x0mat::AbstractMatrix, X::AbstractMatrix, Z::A
 	if return_variance
 		var0 = Vector{Float64}(undef, size(x0mat, 2))
 	end
-	for i = 1:size(x0mat, 2)
+	for i in axes(x0mat, 2)
 		obs_neighbors = nnindices_obs[i]
 		mu, var = interpolate(reshape(x0mat[:, i], size(x0mat, 1), 1), X[:, obs_neighbors], Z[obs_neighbors], cov; kw...)
 		z0[i] = mu[1]
@@ -342,7 +342,7 @@ function kdtree_indices(x_pred::AbstractMatrix{T}, x_obs::AbstractMatrix=Matrix{
 		kdtree = NearestNeighbors.KDTree(x_pred)
 		nnindices_pred, nndistances_pred = NearestNeighbors.knn(kdtree, x_pred, numpredneighbors, true)
 		if cutoff_pred > 0
-			for i = 1:length(nnindices_pred)
+			for i in eachindex(nnindices_pred)
 				nnindices_pred[i] = nnindices_pred[i][nndistances_pred[i] .<= cutoff_pred]
 			end
 		end
@@ -354,7 +354,7 @@ function kdtree_indices(x_pred::AbstractMatrix{T}, x_obs::AbstractMatrix=Matrix{
 		obs_kdtree = NearestNeighbors.KDTree(x_obs)
 		nnindices_obs, nndistances_obs = NearestNeighbors.knn(obs_kdtree, x_pred, numobsneighbors, true)
 		if cutoff_obs > 0
-			for i = 1:length(nnindices_obs)
+			for i in eachindex(nnindices_obs)
 				nnindices_obs[i] = nnindices_obs[i][nndistances_obs[i] .<= cutoff_obs]
 			end
 		end
@@ -378,7 +378,7 @@ Returns:
 function getcovmat(X::AbstractMatrix, cov::Function)
 	covmat = Array{Float64}(undef, size(X, 2), size(X, 2))
 	cov0 = cov(0)
-	for i = 1:size(X, 2)
+	for i in axes(X, 2)
 		covmat[i, i] = cov0
 		for j = i + 1:size(X, 2)
 			covmat[i, j] = cov(LinearAlgebra.norm(X[:, i] - X[:, j]))
@@ -402,9 +402,9 @@ Returns:
 - spatial covariance vector
 """
 function getcovvec!(covvec, x0::AbstractVector, X::AbstractMatrix, cov::Function)
-	for i = 1:size(X, 2)
+	for i in axes(X, 2)
 		d = 0.
-		for j = 1:size(X, 1)
+		for j in axes(X, 1)
 			d += (X[j, i] - x0[j]) ^ 2
 		end
 		d = sqrt(d)
@@ -498,10 +498,10 @@ end
 
 function grid2layers(obs::AbstractVector, xs::AbstractVector, ys::AbstractVector, zs::AbstractVector)
 	layers = Array{Array{Float64, 2}}(undef, length(zs))
-	for k = 1:length(zs)
+	for k in eachindex(zs)
 		layers[k] = Array{Float64}(undef, length(xs), length(ys))
-		for i = 1:length(xs)
-			for j = 1:length(ys)
+		for i in eachindex(xs)
+			for j in eachindex(ys)
 				layers[k][i, j] = obs[k + (j - 1) * length(zs) + (i - 1) * length(zs) * length(ys)]
 			end
 		end

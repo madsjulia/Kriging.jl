@@ -8,7 +8,7 @@ Random.seed!(0)
 X = Float64.([3 7 1 5 9; 3 2 7 9 6])
 Z = exp.(randn(size(X, 2)))
 fig, ax = PyPlot.subplots()
-for i = 1:size(X, 2)
+for i in axes(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 	ax.text([X[1, i] + 0.1], [X[2, i] + 0.1], "$(round(Z[i]; sigdigits=2))", fontsize=16)
 end
@@ -34,7 +34,7 @@ end
 
 fig, ax = PyPlot.subplots()
 cax = ax.imshow(permutedims(krigedfield), extent=[0, 10, 0, 10], origin="lower")
-for i = 1:size(X, 2)
+for i in axes(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 end
 fig.colorbar(cax)
@@ -47,7 +47,7 @@ PyPlot.close(fig)
 kriging_neighborhood_field = Kriging.putgridpoints(xs, ys, z0)
 fig, ax = PyPlot.subplots()
 cax = ax.imshow(permutedims(kriging_neighborhood_field), extent=[0, 10, 0, 10], origin="lower")
-for i = 1:size(X, 2)
+for i in axes(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 end
 fig.colorbar(cax)
@@ -63,7 +63,7 @@ end
 
 fig, ax = PyPlot.subplots()
 cax = ax.imshow(permutedims(inversedistancefield), extent=[0, 10, 0, 10], origin="lower")
-for i = 1:size(X, 2)
+for i in axes(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 end
 fig.colorbar(cax)
@@ -76,7 +76,7 @@ PyPlot.close(fig)
 inversedistance_neighborhood_field = Kriging.putgridpoints(xs, ys, z0)
 fig, ax = PyPlot.subplots()
 cax = ax.imshow(permutedims(inversedistance_neighborhood_field), extent=[0, 10, 0, 10], origin="lower")
-for i = 1:size(X, 2)
+for i in axes(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 end
 fig.colorbar(cax)
@@ -89,7 +89,7 @@ PyPlot.close(fig)
 condsimfield = Kriging.putgridpoints(xs, ys, z0)
 fig, ax = PyPlot.subplots()
 cax = ax.imshow(permutedims(condsimfield), extent=[0, 10, 0, 10], origin="lower")
-for i = 1:size(X, 2)
+for i in axes(X, 2)
 	ax.plot([X[1, i]], [X[2, i]], "r.", ms=10)
 end
 fig.colorbar(cax)
