@@ -230,7 +230,7 @@ function krigevariance(x0mat::AbstractMatrix, X::AbstractMatrix, Z::AbstractVect
 	@assert size(x0mat, 1) == size(X, 1) "Dimensions of data points ($(size(x0mat, 1))) and observations ($(size(X, 1))) do not match!"
 	result = zeros(size(x0mat, 2))
 	resultvariance = fill(cov(0), size(x0mat, 2))
-	if minwindow != nothing && maxwindow != nothing
+	if !isnothing(minwindow) && !isnothing(maxwindow)
 		if length(minwindow) != size(X, 1) || length(maxwindow) != size(X, 1)
 			@error("minwindow and maxwindow must have the same length as the number of dimensions of the data!")
 			result = fill(NaN, size(x0mat, 2))
